@@ -4,15 +4,17 @@ import { CartWishlistProvider } from './context/CartWishlistContext';
 import { useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import AuthContext from './context/AuthContext';
+
+// IMPORTANT: Double-check these paths match your folder structure perfectly!
 import Login from './pages/Login';
 import Register from './pages/Register';
-import ProductCatalog from './components/ProductCatalog';
-import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout'; 
+import ProductCatalog from './components/ProductCatalog'; 
 
 // Main Home Page that fetches live backend database products
 const Home = () => {
-    const { user } = useContext(AuthContext);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -32,11 +34,11 @@ const Home = () => {
     
     return (
         <div style={{ padding: '20px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <h1>Welcome to the E-Commerce Store</h1>
-                {user && <h3>Hello, {user.name}! Enjoy your shopping session.</h3>}
-            </div>
-            {loading ? <h2>Loading catalog items...</h2> : <ProductCatalog products={products} />}
+            {loading ? (
+                <h2 style={{ textAlign: 'center', marginTop: '40px' }}>Loading catalog items...</h2>
+            ) : (
+                <ProductCatalog products={products} />
+            )}
         </div>
     );
 };
@@ -97,6 +99,7 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/wishlist" element={<Wishlist />} />
                         <Route path="/cart" element={<Cart />} />
+                        <Route path="/checkout" element={<Checkout />} />
                     </Routes>
                 </CartWishlistProvider>
             </AuthProvider>
