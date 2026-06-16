@@ -5,12 +5,13 @@ import { useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import AuthContext from './context/AuthContext';
 
-// IMPORTANT: Double-check these paths match your folder structure perfectly!
+// Import all functional subcomponents properly
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Wishlist from './pages/Wishlist';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout'; 
+import Dashboard from './pages/Dashboard';
 import ProductCatalog from './components/ProductCatalog'; 
 
 // Main Home Page that fetches live backend database products
@@ -43,7 +44,7 @@ const Home = () => {
     );
 };
 
-// Global Navigation Bar
+// Global Navigation Bar with fixed syntax structure
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
     return (
@@ -58,6 +59,7 @@ const Navbar = () => {
             <div style={{ display: 'flex', gap: '25px' }}>
                 <Link to="/" style={{ fontWeight: 'bold', textDecoration: 'none', color: 'var(--text-h)' }}>🏪 E-Shop</Link>
                 <Link to="/" style={{ textDecoration: 'none' }}>Catalog</Link>
+                {user && <Link to="/dashboard" style={{ textDecoration: 'none', fontWeight: 'bold', color: '#007bff' }}>📊 My Dashboard</Link>}
                 <Link to="/wishlist" style={{ textDecoration: 'none' }}>❤️ Wishlist</Link>
                 <Link to="/cart" style={{ textDecoration: 'none' }}>🛒 Cart</Link>
             </div>
@@ -100,6 +102,7 @@ function App() {
                         <Route path="/wishlist" element={<Wishlist />} />
                         <Route path="/cart" element={<Cart />} />
                         <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
                     </Routes>
                 </CartWishlistProvider>
             </AuthProvider>
