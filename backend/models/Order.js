@@ -1,56 +1,64 @@
 const mongoose = require('mongoose');
 
-const orderSchema = new mongoose.Schema(
-    {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'User' // Links to the Buyer who placed the order
-        },
-        orderItems: [
-            {
-                name: { type: String, required: true },
-                qty: { type: Number, required: true },
-                price: { type: Number, required: true },
-                product: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    required: true,
-                    ref: 'Product' // Links to the specific items ordered
-                }
-            }
-        ],
-        shippingAddress: {
-            address: { type: String, required: true },
-            city: { type: String, required: true },
-            postalCode: { type: String, required: true }
-        },
-        paymentMethod: {
-            type: String,
-            required: true,
-            enum: ['UPI', 'COD'], // Enforces your requested payment methods
-            default: 'COD'
-        },
-        totalPrice: {
-            type: Number,
-            required: true,
-            default: 0.0
-        },
-        isPaid: {
-            type: Boolean,
-            required: true,
-            default: false
-        },
-        orderStatus: {
-            type: String,
-            required: true,
-            enum: ['Processing', 'Shipped', 'Delivered', 'Cancelled'],
-            default: 'Processing'
-        }
-    },
-    {
-        timestamps: true
-    }
-);
+const orderItemSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1
+  }
+});
 
-const Order = mongoose.model('Order', orderSchema);
-module.exports = Order;
+const orderSchema = new mongoose.Schema({
+  userIdentifier: {
+    type: String,
+    required: true,
+    index: true // Maps to 'Anjan' or your authenticated user session identifier
+  },
+  items: [orderItemSchema],
+  totalAmount: {
+    type: Number,
+    required: true
+  },
+  shippingAddress: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true }
+  },
+  paymentMethod: {
+    type: String,
+    required: true,
+    enum: ['UPI', 'COD'],
+    default: 'UPI'
+  },
+  status: {
+    type: String,
+    required: true,
+    enum: ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refund Requested', 'Refunded'],
+    default: 'Processing'
+  },
+  trackingTimeline: [
+    {
+      status: String,
+      timestamp: { type: Date, default: Date.now },
+      description: String
+    }
+  ]
+}, {
+  timestamps: true
+});
+
+module.exports = mongoose.model('Order', orderSchema);

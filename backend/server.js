@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-// Route Imports (Declared EXACTLY once here)
+// Route Imports
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -26,8 +26,9 @@ app.get('/', (req, res) => {
 
 // Database Connection & Server Startup
 const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/eshop';
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(MONGO_URI)
     .then(() => {
         console.log('Successfully connected to MongoDB.');
         app.listen(PORT, () => {
@@ -37,3 +38,4 @@ mongoose.connect(process.env.MONGO_URI)
     .catch((error) => {
         console.error('Database connection failed:', error.message);
     });
+    
