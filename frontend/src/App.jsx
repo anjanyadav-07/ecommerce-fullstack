@@ -1,137 +1,88 @@
+import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
 import { CartWishlistProvider, useCartWishlist } from './context/CartWishlistContext';
-import { useContext, useState, useEffect } from 'react';
-import axios from 'axios';
-import AuthContext from './context/AuthContext';
-
-// Import all functional subcomponents properly
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Wishlist from './pages/Wishlist';
+import { AuthProvider, default as AuthContext } from './context/AuthContext';
+import Catalog from './pages/Catalog';
 import Cart from './pages/Cart';
-import Checkout from './pages/Checkout'; 
-import Dashboard from './pages/Dashboard';
-import ProductCatalog from './components/ProductCatalog'; 
+import Wishlist from './pages/Wishlist';
+import Checkout from './pages/Checkout';
+import Login from './pages/Login';      // Ensure this file exists
+import Register from './pages/Register'; // Ensure this file exists
 
-// Main Home Page that fetches live backend database products
-const Home = () => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+const NavigationHeader = () => {
+  const { cart, wishlist } = useCartWishlist();
+  const auth = useContext(AuthContext); 
+  const user = auth ? auth.user : null;
+  const logout = auth ? auth.logout : () => {};
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const { data } = await axios.get('http://localhost:5000/api/products');
-                if (data && Array.isArray(data) && data.length > 0) {
-                    setProducts(data);
-                } else {
-                    throw new Error("Empty response array from API.");
-                }
-            } catch (err) {
-                console.warn("API offline or empty database. Activating high-fidelity fallback catalog.");
-                // Shared reliable structural mock array
-                setProducts([
-                    { _id: "m1", name: "Premium Wireless Headphones", description: "Active adaptive noise cancellation.", price: 199, category: "Electronics", rating: 4.8 },
-                    { _id: "m2", name: "Vintage Leather Jacket", description: "Top-grain premium style.", price: 145, category: "Clothing", rating: 4.6 },
-                    { _id: "m3", name: "Mechanical Gaming Keyboard", description: "Ultra-responsive tactile key switches.", price: 89, category: "Electronics", rating: 4.7 },
-                    { _id: "m4", name: "Ergonomic Office Chair", description: "High-back mesh comfort and lumbar support.", price: 249, category: "Furniture", rating: 4.5 },
-                    { _id: "m5", name: "Stainless Steel Water Bottle", description: "Double-walled vacuum insulated flask.", price: 29, category: "Fitness", rating: 4.3 },
-                    { _id: "m6", name: "Ultra-Wide Curved Monitor", description: "Immersive high refresh rate widescreen.", price: 349, category: "Electronics", rating: 4.9 }
-                ]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProducts();
-    }, []);
-    
-    return (
-        <div style={{ padding: '20px' }}>
-            {loading ? (
-                <h2 style={{ textAlign: 'center', marginTop: '40px', color: '#06b6d4' }}>Loading catalog items...</h2>
-            ) : (
-                <ProductCatalog initialProducts={products} />
-            )}
-        </div>
-    );
-};
+  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const wishlistCount = wishlist.length;
 
-// Global Navigation Bar with live context counter badges
-const Navbar = () => {
-    const { user, logout } = useContext(AuthContext);
-    const { cartCount, wishlistCount } = useCartWishlist();
+  return (
+    <nav style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '1rem 2rem', background: 'rgba(15, 23, 42, 0.65)',
+      backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+      position: 'sticky', top: 0, zIndex: 1000
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span style={{ fontSize: '1.5rem' }}>🏪</span>
+        <span style={{ fontSize: '1.5rem', fontWeight: '900', background: 'linear-gradient(90deg, #00f2fe, #4facfe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          E-Shop
+        </span>
+      </div>
 
-    return (
-        <div style={{ 
-            padding: '15px 20px', 
-            backgroundColor: '#111827', 
-            borderBottom: '1px solid #1f2937', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            fontFamily: 'system-ui, sans-serif'
-        }}>
-            <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
-                <Link to="/" style={{ fontWeight: 'bold', textDecoration: 'none', color: '#fff', fontSize: '1.2rem' }}>🏪 E-Shop</Link>
-                <Link to="/" style={{ textDecoration: 'none', color: '#9ca3af' }}>Catalog</Link>
-                {user && <Link to="/dashboard" style={{ textDecoration: 'none', fontWeight: 'bold', color: '#3b82f6' }}>📊 My Dashboard</Link>}
-                
-                <Link to="/wishlist" style={{ textDecoration: 'none', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    ❤️ Wishlist {wishlistCount > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.75rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>{wishlistCount}</span>}
-                </Link>
-                
-                <Link to="/cart" style={{ textDecoration: 'none', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    🛒 Cart {cartCount > 0 && <span style={{ background: '#10b981', color: '#fff', fontSize: '0.75rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>{cartCount}</span>}
-                </Link>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <Link to="/" style={{ color: '#cbd5e1', textDecoration: 'none', fontWeight: '600' }}>Catalog</Link>
+        <Link to="/wishlist" style={{ color: '#cbd5e1', textDecoration: 'none', fontWeight: '600' }}>💖 Wishlist ({wishlistCount})</Link>
+        <Link to="/cart" style={{ color: '#cbd5e1', textDecoration: 'none', fontWeight: '600' }}>🛒 Cart ({cartCount})</Link>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {user ? (
+          <>
+            <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
+              {user.name} <span style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem' }}>{user.role || 'buyer'}</span>
             </div>
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                {user ? (
-                    <>
-                        <span style={{ fontSize: '14px', color: '#9ca3af' }}>
-                            {user.username || user.name} <span style={{ color: '#06b6d4', fontSize: '0.8rem', background: 'rgba(6,182,212,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{user.role}</span>
-                        </span>
-                        <button onClick={logout} style={{ 
-                            padding: '6px 12px', 
-                            background: '#ef4444', 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '6px', 
-                            cursor: 'pointer',
-                            fontWeight: 'bold'
-                        }}>Logout</button>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/login" style={{ textDecoration: 'none', color: '#9ca3af' }}>Login</Link>
-                        <Link to="/register" style={{ textDecoration: 'none', color: '#3b82f6', fontWeight: 'bold' }}>Register</Link>
-                    </>
-                )
-                }
-            </div>
-        </div>
-    );
+            <button onClick={logout} style={{ background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', color: '#fff', border: 'none', padding: '0.45rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <Link to="/login" style={{ color: '#fff', fontWeight: 'bold' }}>Login</Link>
+        )}
+      </div>
+    </nav>
+  );
 };
 
 function App() {
-    return (
-        <Router>
-            <AuthProvider>
-                <CartWishlistProvider>
-                    <Navbar />
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route path="/wishlist" element={<Wishlist />} />
-                        <Route path="/cart" element={<Cart />} />
-                        <Route path="/checkout" element={<Checkout />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                    </Routes>
-                </CartWishlistProvider>
-            </AuthProvider>
-        </Router>
-    );
+  return (
+    <Router>
+      <AuthProvider>
+        <CartWishlistProvider>
+          <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #090d16 0%, #11102b 40%, #20092c 75%, #071524 100%)',
+            backgroundAttachment: 'fixed',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            color: '#ffffff',
+            overflowX: 'hidden'
+          }}>
+            <NavigationHeader />
+            <Routes>
+              <Route path="/" element={<Catalog />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </div>
+        </CartWishlistProvider>
+      </AuthProvider>
+    </Router>
+  );
 }
 
 export default App;

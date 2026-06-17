@@ -1,20 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const CartWishlistContext = createContext(null);
+// Initialize a singular global memory store
+const StateHub = createContext(null);
 
 export const CartWishlistProvider = ({ children }) => {
-  // Safe initialization fetching from persistent browser storage
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('eshop_cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const saved = localStorage.getItem('eshop_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [wishlist, setWishlist] = useState(() => {
-    const savedWishlist = localStorage.getItem('eshop_wishlist');
-    return savedWishlist ? JSON.parse(savedWishlist) : [];
+    try {
+      const saved = localStorage.getItem('eshop_wishlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
-  // Sync state mutations directly to localStorage to handle unexpected refreshes
+  // Automatically update the browser cache whenever things change
   useEffect(() => {
     localStorage.setItem('eshop_cart', JSON.stringify(cart));
   }, [cart]);
@@ -23,60 +31,87 @@ export const CartWishlistProvider = ({ children }) => {
     localStorage.setItem('eshop_wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
 
-  // Operational Action: Add Item to Cart (or increment quantity if already present)
   const addToCart = (product) => {
-    setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex((item) => item._id === product._id);
-      if (existingIndex > -1) {
-        const updatedCart = [...prevCart];
-        updatedCart[existingIndex].quantity += 1;
-        return updatedCart;
+    if (!product || !product._id) return;
+    setCart((prev) => {
+      const index = prev.findIndex((i) => i._id === product._id);
+      if (index > -1) {
+        const updated = [...prev];
+        updated[index] = { ...updated[index], quantity: (updated[index].quantity || 1) + 1 };
+        return updated;
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: 1 }];
     });
   };
 
-  // Operational Action: Remove entire product entry row from Cart
+  // Explicitly adds 1 item to the quantity
+  const incrementQuantity = (productId) => {
+    if (!productId) return;
+    setCart((prev) =>
+      prev.map((item) =>
+        item._id === productId ? { ...item, quantity: (item.quantity || 1) + 1 } : item
+      )
+    );
+  };
+
+  // Explicitly removes 1 item from the quantity
+  const decrementQuantity = (productId) => {
+    if (!productId) return;
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item._id === productId ? { ...item, quantity: (item.quantity || 1) - 1 } : item
+        )
+        .filter((item) => item.quantity > 0) // Removes the item if quantity drops to 0
+    );
+  };
+
   const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
+    if (!productId) return;
+    setCart((prev) => prev.filter((item) => item._id !== productId));
   };
 
-  // Operational Action: Toggle items cleanly inside the Wishlist array
   const toggleWishlist = (product) => {
-    setWishlist((prevWishlist) => {
-      const isAlreadySaved = prevWishlist.some((item) => item._id === product._id);
-      if (isAlreadySaved) {
-        return prevWishlist.filter((item) => item._id !== product._id);
+    if (!product || !product._id) return;
+    setWishlist((prev) => {
+      const exists = prev.some((item) => item._id === product._id);
+      if (exists) {
+        return prev.filter((item) => item._id !== product._id);
       }
-      return [...prevWishlist, product];
+      return [...prev, product];
     });
   };
 
-  // Utility checking helper for styling or icon transformations
   const isInWishlist = (productId) => {
+    if (!productId) return false;
     return wishlist.some((item) => item._id === productId);
   };
 
   return (
-    <CartWishlistContext.Provider value={{
+    <StateHub.Provider value={{
       cart,
       wishlist,
       addToCart,
+      incrementQuantity,
+      decrementQuantity,
       removeFromCart,
       toggleWishlist,
       isInWishlist,
-      cartCount: cart.reduce((acc, item) => acc + item.quantity, 0),
+      cartCount: cart.reduce((total, item) => total + (item.quantity || 0), 0),
       wishlistCount: wishlist.length
     }}>
       {children}
-    </CartWishlistContext.Provider>
+    </StateHub.Provider>
   );
 };
 
+// Export the customized processing hook explicitly
 export const useCartWishlist = () => {
-  const context = useContext(CartWishlistContext);
-  if (!context) {
-    throw new Error('useCartWishlist must be utilized within a valid CartWishlistProvider wrap.');
+  const activeContext = useContext(StateHub);
+  if (!activeContext) {
+    throw new Error('useCartWishlist must be inside a CartWishlistProvider block.');
   }
-  return context;
+  return activeContext;
 };
+
+export default StateHub;
