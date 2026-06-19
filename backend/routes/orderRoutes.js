@@ -1,24 +1,38 @@
 const express = require('express');
 const router = express.Router();
 
-// 1. Import your controllers safely
-const orderController = require('../controllers/orderController') || {};
+// 1. Explicitly import the modules
+const orderController = require('../controllers/orderController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-// 2. Extract functions with strict fallback checks to prevent undefined crashes
-const addOrderItems = orderController.addOrderItems || ((req, res) => res.status(501).send("Not Implemented"));
-const getMyOrders = orderController.getMyOrders || ((req, res) => res.status(501).send("Not Implemented"));
-const cancelOrder = orderController.cancelOrder || ((req, res) => res.status(501).send("Not Implemented"));
-const updateOrderStatus = orderController.updateOrderStatus || ((req, res) => res.status(501).send("Not Implemented"));
+// 2. Log contents to the console to verify successful import
+console.log("--- DEBUG START ---");
+console.log("Controller loaded:", orderController);
+console.log("Middleware loaded:", authMiddleware);
 
-// 3. Import your auth middleware safely
-const authMiddleware = require('../middleware/authMiddleware') || {};
-const protect = authMiddleware.protect || authMiddleware || ((req, res, next) => next());
+// 3. Destructure the functions
+const { 
+    addOrderItems, 
+    getMyOrders, 
+    cancelOrder, 
+    updateOrderStatus 
+} = orderController;
 
-// 4. Register Core Pipelines safely
+const { protect } = authMiddleware;
+
+// 4. Force-check to pinpoint the undefined variable
+if (typeof protect !== 'function') {
+    throw new Error("CRITICAL ERROR: 'protect' is not a function! Check middleware/authMiddleware.js exports.");
+}
+if (typeof addOrderItems !== 'function') {
+    throw new Error("CRITICAL ERROR: 'addOrderItems' is not a function! Check controllers/orderController.js exports.");
+}
+
+console.log("--- DEBUG SUCCESS: All handlers are valid functions ---");
+
+// 5. Define Routes
 router.post('/', protect, addOrderItems);
 router.get('/myorders', protect, getMyOrders);
-
-// 5. Register Status Updates safely
 router.put('/:id/cancel', protect, cancelOrder);
 router.put('/:id/status', protect, updateOrderStatus);
 

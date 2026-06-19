@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Initialize a singular global memory store
 const StateHub = createContext(null);
 
 export const CartWishlistProvider = ({ children }) => {
@@ -8,28 +7,18 @@ export const CartWishlistProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('eshop_cart');
       return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   });
 
   const [wishlist, setWishlist] = useState(() => {
     try {
       const saved = localStorage.getItem('eshop_wishlist');
       return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   });
 
-  // Automatically update the browser cache whenever things change
-  useEffect(() => {
-    localStorage.setItem('eshop_cart', JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem('eshop_wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
+  useEffect(() => { localStorage.setItem('eshop_cart', JSON.stringify(cart)); }, [cart]);
+  useEffect(() => { localStorage.setItem('eshop_wishlist', JSON.stringify(wishlist)); }, [wishlist]);
 
   const addToCart = (product) => {
     if (!product || !product._id) return;
@@ -44,9 +33,16 @@ export const CartWishlistProvider = ({ children }) => {
     });
   };
 
-  // Explicitly adds 1 item to the quantity
-  const incrementQuantity = (productId) => {
+  const updateQuantity = (productId, newQuantity) => {
     if (!productId) return;
+    setCart((prev) =>
+      prev.map((item) =>
+        item._id === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
+      )
+    );
+  };
+
+  const incrementQuantity = (productId) => {
     setCart((prev) =>
       prev.map((item) =>
         item._id === productId ? { ...item, quantity: (item.quantity || 1) + 1 } : item
@@ -54,49 +50,43 @@ export const CartWishlistProvider = ({ children }) => {
     );
   };
 
-  // Explicitly removes 1 item from the quantity
   const decrementQuantity = (productId) => {
-    if (!productId) return;
     setCart((prev) =>
-      prev
-        .map((item) =>
-          item._id === productId ? { ...item, quantity: (item.quantity || 1) - 1 } : item
-        )
-        .filter((item) => item.quantity > 0) // Removes the item if quantity drops to 0
+      prev.map((item) =>
+        item._id === productId ? { ...item, quantity: (item.quantity || 1) - 1 } : item
+      ).filter((item) => item.quantity > 0)
     );
   };
 
   const removeFromCart = (productId) => {
-    if (!productId) return;
     setCart((prev) => prev.filter((item) => item._id !== productId));
   };
+
+  const clearCart = () => setCart([]);
 
   const toggleWishlist = (product) => {
     if (!product || !product._id) return;
     setWishlist((prev) => {
       const exists = prev.some((item) => item._id === product._id);
-      if (exists) {
-        return prev.filter((item) => item._id !== product._id);
-      }
-      return [...prev, product];
+      return exists ? prev.filter((item) => item._id !== product._id) : [...prev, product];
     });
   };
 
-  const isInWishlist = (productId) => {
-    if (!productId) return false;
-    return wishlist.some((item) => item._id === productId);
-  };
+  // Helper function to check if item is in wishlist
+  const isInWishlist = (productId) => wishlist.some((item) => item._id === productId);
 
   return (
     <StateHub.Provider value={{
-      cart,
-      wishlist,
-      addToCart,
-      incrementQuantity,
-      decrementQuantity,
-      removeFromCart,
+      cart, 
+      wishlist, 
+      addToCart, 
+      updateQuantity, 
+      incrementQuantity, 
+      decrementQuantity, 
+      removeFromCart, 
+      clearCart, 
       toggleWishlist,
-      isInWishlist,
+      isInWishlist, // Added back to the provider value
       cartCount: cart.reduce((total, item) => total + (item.quantity || 0), 0),
       wishlistCount: wishlist.length
     }}>
@@ -105,13 +95,5 @@ export const CartWishlistProvider = ({ children }) => {
   );
 };
 
-// Export the customized processing hook explicitly
-export const useCartWishlist = () => {
-  const activeContext = useContext(StateHub);
-  if (!activeContext) {
-    throw new Error('useCartWishlist must be inside a CartWishlistProvider block.');
-  }
-  return activeContext;
-};
-
+export const useCartWishlist = () => useContext(StateHub);
 export default StateHub;

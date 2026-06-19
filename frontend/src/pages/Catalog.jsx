@@ -4,38 +4,30 @@ import { useCartWishlist } from '../context/CartWishlistContext';
 const Catalog = ({ products = [] }) => {
   const { addToCart, toggleWishlist, isInWishlist } = useCartWishlist();
 
+  // 1. Updated data with 'image' field for every product
   const catalogItems = products.length > 0 ? products : [
-    { _id: '1', name: 'Premium Wireless Headphones', price: 199, category: 'ELECTRONICS', rating: 4.8, description: 'Active adaptive noise cancellation.' },
-    { _id: '2', name: 'Vintage Leather Jacket', price: 145, category: 'CLOTHING', rating: 4.6, description: 'Top-grain premium style.' },
-    { _id: '3', name: 'Mechanical Gaming Keyboard', price: 89, category: 'ELECTRONICS', rating: 4.7, description: 'Ultra-responsive tactile key switches.' },
-    { _id: '4', name: 'Ergonomic Office Chair', price: 249, category: 'FURNITURE', rating: 4.5, description: 'High-back lumbar configuration setup.' },
-    { _id: '5', name: 'Stainless Steel Water Bottle', price: 29, category: 'FITNESS', rating: 4.3, description: 'Vacuum insulated thermal core structure.' },
-    { _id: '6', name: 'Ultra-Wide Curved Monitor', price: 349, category: 'ELECTRONICS', rating: 4.9, description: 'Immersive panorama screen landscape.' }
+    { _id: '1', name: 'Premium Wireless Headphones', price: 199, category: 'ELECTRONICS', rating: 4.8, description: 'Active adaptive noise cancellation.', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e' },
+    { _id: '2', name: 'Vintage Leather Jacket', price: 145, category: 'CLOTHING', rating: 4.6, description: 'Top-grain premium style.', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5' },
+    { _id: '3', name: 'Mechanical Gaming Keyboard', price: 89, category: 'ELECTRONICS', rating: 4.7, description: 'Ultra-responsive tactile key switches.', image: 'https://images.unsplash.com/photo-1595225476474-87563907a212' },
+    { _id: '4', name: 'Ergonomic Office Chair', price: 249, category: 'FURNITURE', rating: 4.5, description: 'High-back lumbar configuration setup.', image: 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1' },
+    { _id: '5', name: 'Stainless Steel Water Bottle', price: 29, category: 'FITNESS', rating: 4.3, description: 'Vacuum insulated thermal core structure.', image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8' },
+    { _id: '6', name: 'Ultra-Wide Curved Monitor', price: 349, category: 'ELECTRONICS', rating: 4.9, description: 'Immersive panorama screen landscape.', image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3a35' }
   ];
 
   return (
     <div style={{ padding: '2.5rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '3.5rem', padding: '10px 0' }}>
         <h1 style={{
-          fontSize: '2.5rem',
-          fontWeight: '900',
-          lineHeight: '1.4',
+          fontSize: '2.5rem', fontWeight: '900', lineHeight: '1.4',
           background: 'linear-gradient(90deg, #00f2fe 0%, #4facfe 40%, #00f2fe 70%, #f355da 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          margin: '0',
-          letterSpacing: '-0.02em',
-          display: 'inline-block'
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0',
+          letterSpacing: '-0.02em', display: 'inline-block'
         }}>
           Explore Next-Gen Catalog Gear
         </h1>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
-        gap: '2.25rem'
-      }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '2.25rem' }}>
         {catalogItems.map((product) => {
           const saved = isInWishlist(product._id);
           const isClothing = product.category === 'CLOTHING';
@@ -50,16 +42,24 @@ const Catalog = ({ products = [] }) => {
 
           return (
             <div key={product._id} style={{
-              background: 'rgba(20, 30, 54, 0.55)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '1.75rem',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.4)',
-              display: 'flex',
-              flexDirection: 'column',
+              background: 'rgba(20, 30, 54, 0.55)', backdropFilter: 'blur(20px)', borderRadius: '20px',
+              padding: '1.75rem', border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.4)', display: 'flex', flexDirection: 'column',
               justifyContent: 'space-between',
             }}>
+              {/* 2. Added the Image section here */}
+              <div style={{ width: '100%', height: '200px', marginBottom: '1.5rem', borderRadius: '12px', overflow: 'hidden' }}>
+               <img 
+  src={product.image || 'https://via.placeholder.com/400x200?text=No+Image'} 
+  alt={product.name} 
+  onError={(e) => { 
+    // This triggers if the original image fails to load
+    e.target.src = 'https://via.placeholder.com/400x200?text=Image+Not+Found'; 
+  }}
+  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+/>
+              </div>
+
               <div>
                 <span style={{
                   fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.08em', padding: '5px 12px',
@@ -74,6 +74,7 @@ const Catalog = ({ products = [] }) => {
                   <span style={{ fontSize: '1.1rem' }}>★</span> <strong style={{ color: '#f1f5f9' }}>{product.rating}</strong>
                 </div>
               </div>
+              
               <div>
                 <div style={{ fontSize: '2rem', fontWeight: '900', color: '#ffffff', marginBottom: '1.5rem', display: 'flex', alignItems: 'baseline' }}>
                   <span style={{ fontSize: '1.25rem', color: accentColor, marginRight: '2px' }}>$</span>{product.price}

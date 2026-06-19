@@ -1,12 +1,13 @@
 import React, { useState, useContext } from 'react';
-import { useCartWishlist } from '../context/CartWishlistContext';
+import { useCartWishlist } from '../context/CartWishlistContext'; // Ensure this matches your folder name
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 export default function Checkout() {
-    const { cart, updateQuantity } = useCartWishlist();
-    const { user } = useContext(AuthContext) || {}; // Added fallback to prevent crash
+    // 1. We import 'clearCart' instead of 'updateQuantity'
+    const { cart, clearCart } = useCartWishlist();
+    const { user } = useContext(AuthContext) || {};
     const navigate = useNavigate();
 
     const [shippingAddress, setShippingAddress] = useState({ address: '', city: '', postalCode: '' });
@@ -17,29 +18,36 @@ export default function Checkout() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Safety check if user is not logged in
+
         if (!user || !user.token) {
             alert('Please sign in to complete your purchase.');
             return navigate('/login');
         }
 
+        const orderData = {
+            orderItems: cart,
+            shippingAddress: shippingAddress,
+            paymentMethod: paymentMethod,
+            totalPrice: totalPrice
+        };
+
         try {
             setLoading(true);
-            await axios.post('http://localhost:5000/api/orders', {
-                orderItems: cart,
-                shippingAddress,
-                paymentMethod,
-                totalPrice
-            }, {
+            
+            await axios.post('http://localhost:5000/api/orders', orderData, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
 
             alert('Order Placed Successfully!');
-            cart.forEach(item => updateQuantity(item._id, -item.quantity));
+            
+            // 2. Use clearCart() to wipe the cart state instantly
+            clearCart(); 
+            
             navigate('/');
         } catch (err) {
-            alert('Checkout failed: ' + (err.response?.data?.message || 'Server error'));
+            console.error("Full error response from server:", err.response);
+            const errorMessage = err.response?.data?.message || err.message || 'Server error';
+            alert('Checkout failed: ' + errorMessage);
         } finally {
             setLoading(false);
         }
@@ -49,8 +57,18 @@ export default function Checkout() {
         <div style={{ padding: '2.5rem', maxWidth: '600px', margin: '0 auto', color: '#fff' }}>
             <h2>Secure Checkout</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <input placeholder="Street Address" required onChange={(e) => setShippingAddress({...shippingAddress, address: e.target.value})} style={{ padding: '10px' }} />
-                <input placeholder="City" required onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})} style={{ padding: '10px' }} />
+                <input 
+                    placeholder="Street Address" 
+                    required 
+                    onChange={(e) => setShippingAddress({...shippingAddress, address: e.target.value})} 
+                    style={{ padding: '10px', color: '#000' }} 
+                />
+                <input 
+                    placeholder="City" 
+                    required 
+                    onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})} 
+                    style={{ padding: '10px', color: '#000' }} 
+                />
                 <button type="submit" disabled={loading} style={{ padding: '15px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer' }}>
                     {loading ? 'Processing...' : 'Place Order'}
                 </button>
