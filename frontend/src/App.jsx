@@ -2,12 +2,20 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { CartWishlistProvider, useCartWishlist } from './context/CartWishlistContext';
 import { AuthProvider, default as AuthContext } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Catalog from './pages/Catalog';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
-import Login from './pages/Login';      // Ensure this file exists
-import Register from './pages/Register'; // Ensure this file exists
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ProductDetail from './pages/ProductDetail';
+import VerifyEmail from './pages/VerifyEmail'; 
+import AdminRoute from './components/AdminRoute';
+import AdminDashboard from './pages/AdminDashboard';
+// 1. Import your new components
+import SellerRoute from './components/SellerRoute';
+import SellerDashboard from './pages/SellerDashboard';
 
 const NavigationHeader = () => {
   const { cart, wishlist } = useCartWishlist();
@@ -36,13 +44,16 @@ const NavigationHeader = () => {
         <Link to="/" style={{ color: '#cbd5e1', textDecoration: 'none', fontWeight: '600' }}>Catalog</Link>
         <Link to="/wishlist" style={{ color: '#cbd5e1', textDecoration: 'none', fontWeight: '600' }}>💖 Wishlist ({wishlistCount})</Link>
         <Link to="/cart" style={{ color: '#cbd5e1', textDecoration: 'none', fontWeight: '600' }}>🛒 Cart ({cartCount})</Link>
+        
+        {/* 2. Optional: Add a link in header for quick access if user is a seller */}
+        {user?.role === 'seller' && <Link to="/seller/dashboard" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: '600' }}>Seller Portal</Link>}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {user ? (
           <>
             <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
-              {user.name} <span style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem' }}>{user.role || 'buyer'}</span>
+              {user.name} <span style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem' }}>{user.role}</span>
             </div>
             <button onClick={logout} style={{ background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', color: '#fff', border: 'none', padding: '0.45rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
               Logout
@@ -72,11 +83,17 @@ function App() {
             <NavigationHeader />
             <Routes>
               <Route path="/" element={<Catalog />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              
+              <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              {/* 3. Added the new Seller Route */}
+              <Route path="/seller/dashboard" element={<SellerRoute><SellerDashboard /></SellerRoute>} />
             </Routes>
           </div>
         </CartWishlistProvider>

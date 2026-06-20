@@ -27,11 +27,24 @@ export default function NavigationHeader() {
         <Link to="/cart" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Cart ({cartCount})</Link>
       </div>
 
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {user ? (
-          <button onClick={logout} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.4rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
-            Logout
-          </button>
+          <>
+            {/* Admin link: Only visible if user.role is 'admin' */}
+            {user.role === 'admin' && (
+              <Link to="/admin/dashboard" style={{ color: '#00f2fe', textDecoration: 'none', fontWeight: 'bold' }}>
+                Admin
+              </Link>
+            )}
+
+            <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+              {user.name}
+            </div>
+
+            <button onClick={logout} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.4rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
+              Logout
+            </button>
+          </>
         ) : (
           <Link to="/login" style={{ color: '#fff', textDecoration: 'none' }}>Login</Link>
         )}
