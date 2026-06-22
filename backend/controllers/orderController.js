@@ -1,63 +1,98 @@
 const Order = require('../models/Order');
 
-// @desc    Create new order
-// @route   POST /api/orders
-// @access  Private
+// @desc    Place a new order
 const addOrderItems = async (req, res) => {
     try {
-        const { orderItems, shippingAddress, paymentMethod, totalPrice } = req.body;
-
-        if (!orderItems || orderItems.length === 0) {
-            return res.status(400).json({ message: 'No order items' });
-        }
-
-        // Map the frontend data to your model's required fields
-        // This bridges the gap between your UI and your Database schema
+        const { items, totalAmount, shippingAddress, paymentMethod } = req.body;
         const order = new Order({
             user: req.user._id,
-            userIdentifier: req.user._id, // Mapping requirement
-            orderItems,
-            shippingAddress: {
-                street: shippingAddress.address, // Mapping 'address' to 'street'
-                city: shippingAddress.city,
-                postalCode: shippingAddress.postalCode || "N/A", // Default if empty
-                country: "Unknown" // Default if not sent by frontend
-            },
-            paymentMethod,
-            totalAmount: totalPrice // Mapping 'totalPrice' to 'totalAmount'
+            items,
+            totalAmount,
+            shippingAddress,
+            paymentMethod
         });
-
         const createdOrder = await order.save();
         res.status(201).json(createdOrder);
     } catch (error) {
-        console.error("Order creation error:", error);
-        res.status(500).json({ message: 'Server error during checkout', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Get logged-in user's order history
-// @route   GET /api/orders/myorders
+// @desc    Get logged in user orders
 const getMyOrders = async (req, res) => {
     try {
-        if (!req.user || !req.user._id) {
-            return res.status(401).json({ message: 'Authorization identity context missing.' });
-        }
-
-        const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+        const orders = await Order.find({ user: req.user._id }).populate('items.productId');
         res.json(orders);
     } catch (error) {
-        res.status(500).json({ message: "Failed to pull order manifests.", error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
-// Placeholder for missing functions to prevent 501 errors
-const cancelOrder = async (req, res) => res.status(501).json({ message: "Not implemented" });
-const updateOrderStatus = async (req, res) => res.status(501).json({ message: "Not implemented" });
+// @desc    Request a refund (Buyer)
+const requestRefund = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const order = await Order.findById(req.params.id);
 
-// EXPORT ALL FUNCTIONS
+        if (order && order.user.toString() === req.user._id.toString()) {
+            order.refundStatus = 'Requested';
+            order.refundReason = reason;
+            await order.save();
+            res.json({ message: 'Refund request submitted successfully' });
+        } else {
+            res.status(404).json({ message: 'Order not found or unauthorized' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Cancel an order (Buyer)
+const cancelOrder = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (order && order.user.toString() === req.user._id.toString()) {
+            order.status = 'Cancelled';
+            order.trackingTimeline.push({ status: 'Cancelled', description: 'Order cancelled by user' });
+            await order.save();
+            res.json({ message: 'Order cancelled successfully' });
+        } else {
+            res.status(404).json({ message: 'Order not found or unauthorized' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update order status/tracking (Seller/Admin)
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { status, trackingNumber, description } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (order) {
+            order.status = status;
+            if (trackingNumber) order.trackingNumber = trackingNumber;
+            
+            order.trackingTimeline.push({
+                status,
+                description: description || `Status updated to ${status}`
+            });
+
+            await order.save();
+            res.json(order);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = { 
     addOrderItems, 
     getMyOrders, 
+    requestRefund, 
     cancelOrder, 
     updateOrderStatus 
 };

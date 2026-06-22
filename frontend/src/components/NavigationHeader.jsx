@@ -25,12 +25,18 @@ export default function NavigationHeader() {
         <Link to="/" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Catalog</Link>
         <Link to="/wishlist" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Wishlist ({wishlistCount})</Link>
         <Link to="/cart" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Cart ({cartCount})</Link>
+        
+        {/* Added My Orders Link here */}
+        {user && (
+          <Link to="/my-orders" style={{ color: '#cbd5e1', textDecoration: 'none', fontWeight: '600' }}>
+            My Orders
+          </Link>
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {user ? (
           <>
-            {/* Admin link: Only visible if user.role is 'admin' */}
             {user.role === 'admin' && (
               <Link to="/admin/dashboard" style={{ color: '#00f2fe', textDecoration: 'none', fontWeight: 'bold' }}>
                 Admin

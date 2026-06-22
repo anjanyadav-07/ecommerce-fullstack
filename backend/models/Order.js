@@ -6,57 +6,41 @@ const orderItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true
   },
-  name: {
-    type: String,
-    required: true
-  },
-  price: {
-    type: Number,
-    required: true
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 1
-  }
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  quantity: { type: Number, required: true, min: 1 }
 });
 
 const orderSchema = new mongoose.Schema({
-  userIdentifier: {
-    type: String,
-    required: true,
-    index: true // Maps to 'Anjan' or your authenticated user session identifier
-  },
-  items: [orderItemSchema],
-  totalAmount: {
-    type: Number,
+  // Use 'user' ref instead of userIdentifier for better database relationships
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
-  shippingAddress: {
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    postalCode: { type: String, required: true },
-    country: { type: String, required: true }
-  },
-  paymentMethod: {
-    type: String,
-    required: true,
-    enum: ['UPI', 'COD'],
-    default: 'UPI'
-  },
+  items: [orderItemSchema],
+  totalAmount: { type: Number, required: true },
+  
+  // Status and Tracking
   status: {
     type: String,
-    required: true,
-    enum: ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refund Requested', 'Refunded'],
+    enum: ['Processing', 'Shipped', 'Delivered', 'Cancelled'],
     default: 'Processing'
   },
-  trackingTimeline: [
-    {
-      status: String,
-      timestamp: { type: Date, default: Date.now },
-      description: String
-    }
-  ]
+  trackingNumber: { type: String, default: null },
+  trackingTimeline: [{
+    status: String,
+    timestamp: { type: Date, default: Date.now },
+    description: String
+  }],
+
+  // NEW: Refund Workflow Fields
+  refundStatus: {
+    type: String,
+    enum: ['None', 'Requested', 'Approved', 'Rejected', 'Refunded'],
+    default: 'None'
+  },
+  refundReason: { type: String, default: null }
 }, {
   timestamps: true
 });

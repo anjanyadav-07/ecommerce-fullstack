@@ -1,39 +1,27 @@
 const express = require('express');
 const router = express.Router();
-
-// 1. Explicitly import the modules
-const orderController = require('../controllers/orderController');
-const authMiddleware = require('../middleware/authMiddleware');
-
-// 2. Log contents to the console to verify successful import
-console.log("--- DEBUG START ---");
-console.log("Controller loaded:", orderController);
-console.log("Middleware loaded:", authMiddleware);
-
-// 3. Destructure the functions
 const { 
-    addOrderItems, 
     getMyOrders, 
-    cancelOrder, 
-    updateOrderStatus 
-} = orderController;
+    requestRefund, 
+    updateOrderStatus, 
+    addOrderItems, 
+    cancelOrder 
+} = require('../controllers/orderController');
+const { protect, isSellerOrAdmin } = require('../middleware/authMiddleware');
 
-const { protect } = authMiddleware;
-
-// 4. Force-check to pinpoint the undefined variable
-if (typeof protect !== 'function') {
-    throw new Error("CRITICAL ERROR: 'protect' is not a function! Check middleware/authMiddleware.js exports.");
-}
-if (typeof addOrderItems !== 'function') {
-    throw new Error("CRITICAL ERROR: 'addOrderItems' is not a function! Check controllers/orderController.js exports.");
-}
-
-console.log("--- DEBUG SUCCESS: All handlers are valid functions ---");
-
-// 5. Define Routes
+// 1. Buyer: Place an order
 router.post('/', protect, addOrderItems);
-router.get('/myorders', protect, getMyOrders);
+
+// 2. Buyer: View their own order history
+router.get('/my-orders', protect, getMyOrders);
+
+// 3. Buyer: Request a refund for a specific order
+router.put('/:id/refund', protect, requestRefund);
+
+// 4. Buyer: Cancel an order (if applicable)
 router.put('/:id/cancel', protect, cancelOrder);
-router.put('/:id/status', protect, updateOrderStatus);
+
+// 5. Seller/Admin: Update order status (Tracking/Shipping updates)
+router.put('/:id/status', protect, isSellerOrAdmin, updateOrderStatus);
 
 module.exports = router;

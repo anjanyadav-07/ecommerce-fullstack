@@ -16,6 +16,7 @@ import AdminDashboard from './pages/AdminDashboard';
 // 1. Import your new components
 import SellerRoute from './components/SellerRoute';
 import SellerDashboard from './pages/SellerDashboard';
+import MyOrders from './components/MyOrders';
 
 const NavigationHeader = () => {
   const { cart, wishlist } = useCartWishlist();
@@ -90,6 +91,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
               
               <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               {/* 3. Added the new Seller Route */}
